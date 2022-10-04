@@ -10,6 +10,19 @@ use std::io::BufReader;
 use ts_rs::TS;
 use std::env;
 
+fn main() {
+    tauri::Builder::default()
+    .invoke_handler(tauri::generate_handler![
+        create_memo_command,
+        move_memo_command,
+        initial_file_command,
+        initial_setting_command,
+        delete_memo_command,
+    ])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+}
+
 #[derive(Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 struct Todo {
@@ -134,6 +147,47 @@ fn move_todo(task_path: String,arg_memo: Todo, from: String, to: String) -> Resu
     Ok(true)
 }
 
+fn delete_memo(path: String, target: String, id: String) -> Result<bool, Box<dyn error::Error>> {
+    let mut read_memo = read_file(path.clone())?;
+    
+    match &*target {
+        "todo" => {
+            let target_id = read_memo.todo.iter().position(|x| *x.id == id);
+            println!("target_id {:?}",target_id);
+            match target_id {
+                Some(fix_target_id) => {
+                    read_memo.todo.remove(fix_target_id);
+                },
+                None => {println!("todoではありません")},
+            }
+        },
+        "in_progress" => {
+            let target_id = read_memo.in_progress.iter().position(|x| *x.id == id);
+            match target_id {
+                Some(fix_target_id) => {
+                    read_memo.in_progress.remove(fix_target_id);
+                },
+                None => {println!("todoではありません")},
+            }
+        },
+        "done" => {
+            let target_id = read_memo.done.iter().position(|x| *x.id == id);
+            match target_id {
+                Some(fix_target_id) => {
+                    read_memo.done.remove(fix_target_id);
+                },
+                None => {println!("todoではありません")},
+            }
+        },
+        _ => {println!("todoではありません")},
+    }
+    let json_data = serde_json::to_string_pretty(&read_memo).unwrap();
+    let mut json_file = File::create(path).unwrap();
+    writeln!(json_file, "{}", json_data);
+    Ok(true)
+
+}
+
 #[tauri::command]
 fn create_memo_command(task_path:String,arg_memo: Todo) {
     println!("送られてきたデータ： {:?}",arg_memo);
@@ -168,16 +222,13 @@ fn initial_setting_command(path: String) -> Result<Memo, String> {
     }
 }
 
-fn main() {
-    tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![
-        create_memo_command,
-        move_memo_command,
-        initial_file_command,
-        initial_setting_command,
-    ])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+#[tauri::command]
+fn delete_memo_command(path: String, target: String, id: String) -> Result<bool, String> {
+    let result = delete_memo(path, target,id);
+    match result {
+        Ok(memo) => Ok(memo),
+        Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
+    }
 }
 
 
