@@ -96,7 +96,7 @@ function App() {
   };
 
   useEffect(() => {
-    invoke("check_path")
+    invoke("check_path_command")
       .then((data) => {
         console.log("data", data);
         if (data) {
