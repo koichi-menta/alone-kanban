@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
 import { Memo } from "../src-tauri/bindings/Memo";
@@ -12,8 +12,7 @@ function App() {
   const [todo, setTodo] = useState<Todo[]>([]);
   const [inProgress, setInProgress] = useState<Todo[]>([]);
   const [done, setDone] = useState<Todo[]>([]);
-  const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [taskPath, setTaskPath] = useState<string | string[]>("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const handleCreateMemo = async () => {
     if (text === "") return;
@@ -24,7 +23,6 @@ function App() {
       is_complete: false,
     };
     await invoke("create_memo_command", {
-      taskPath,
       argMemo: newTodo,
     })
       .then(() => {
@@ -43,7 +41,6 @@ function App() {
     if (!oldData) return;
 
     await invoke("move_memo_command", {
-      taskPath,
       argMemo: oldData,
       from,
       to,
@@ -60,7 +57,6 @@ function App() {
           path: files,
         })
           .then((data) => {
-            setTaskPath(files);
             setTodo(data.todo);
             setInProgress(data.in_progress);
             setDone(data.done);
@@ -71,10 +67,8 @@ function App() {
   };
 
   const handleDeleteMemo = async (e: any, id: string) => {
-    if (taskPath === null) return;
     const target = e.currentTarget.getAttribute("data-target");
     await invoke<Memo>("delete_memo_command", {
-      path: taskPath,
       target,
       id,
     })
@@ -100,6 +94,23 @@ function App() {
       })
       .catch(() => {});
   };
+
+  useEffect(() => {
+    invoke("check_path")
+      .then((data) => {
+        console.log("data", data);
+        if (data) {
+          invoke<Memo>("get_memo_command").then((todo) => {
+            setTodo(todo.todo);
+            setInProgress(todo.in_progress);
+            setDone(todo.done);
+          });
+        } else {
+          setIsOpen(true);
+        }
+      })
+      .catch(() => {});
+  });
 
   return (
     <div className="wrapper">

@@ -3,9 +3,11 @@
     windows_subsystem = "windows"
 )]
 
+use std::sync::Mutex;
 use std::{fs::File, error};
 use std::io::{prelude::*};
 use serde::{Deserialize, Serialize};
+use tauri::{Manager, State};
 use std::io::BufReader;
 use ts_rs::TS;
 use std::env;
@@ -15,10 +17,16 @@ fn main() {
     .invoke_handler(tauri::generate_handler![
         create_memo_command,
         move_memo_command,
-        initial_file_command,
         initial_setting_command,
         delete_memo_command,
+        check_path,
+        get_memo_command,
     ])
+    .setup(|app| {
+        app.manage(TaskPath(Mutex::new(String::from(""))));
+
+        Ok(())
+    })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
@@ -38,6 +46,9 @@ struct Memo {
     in_progress: Vec<Todo>,
     done: Vec<Todo>,
 }
+
+#[derive(Debug)]
+struct TaskPath(Mutex<String>);
 
 fn read_file(path: String) ->  Result<Memo, Box<dyn error::Error>> {
     let memos_file = File::open(path)?;
@@ -189,33 +200,27 @@ fn delete_memo(path: String, target: String, id: String) -> Result<bool, Box<dyn
 }
 
 #[tauri::command]
-fn create_memo_command(task_path:String,arg_memo: Todo) {
-    println!("送られてきたデータ： {:?}",arg_memo);
+fn create_memo_command(arg_memo: Todo, task_path: State<TaskPath>) {
+    let m_task_path = task_path.0.lock().unwrap();
     // エラーハンドリングは必要
-    create_todo(task_path, arg_memo);
+    create_todo(m_task_path.to_string(), arg_memo);
 }
 
 
 #[tauri::command]
-fn move_memo_command(task_path: String,arg_memo: Todo, from: String, to: String) {
-    println!("送られてきたデータ task_path {:?}",task_path);
-    println!("送られてきたデータ arg_memo {:?}",arg_memo);
-    println!("送られてきたデータ from {:?}",from);
-    println!("送られてきたデータ to {:?}",to);
-
+fn move_memo_command(arg_memo: Todo, from: String, to: String, task_path: State<TaskPath>) {
+    let m_task_path = task_path.0.lock().unwrap();
     // エラーハンドリングは必要
-    move_todo(task_path,arg_memo,from,to);
+    move_todo(m_task_path.to_string(),arg_memo,from,to);
 }
 
 #[tauri::command]
-fn initial_file_command(path: String) {
-    println!("パス {:?}",path);
-    println!("パス {:?}",env::vars());
-}
+fn initial_setting_command(path:String, task_path: State<TaskPath>) -> Result<Memo, String> {
+    let mut m_task_path = task_path.0.lock().unwrap();
+    *m_task_path = path;
 
-#[tauri::command]
-fn initial_setting_command(path: String) -> Result<Memo, String> {
-    let result = read_file(path);
+    let result = read_file(m_task_path.to_string());
+
     match result {
         Ok(memo) => Ok(memo),
         Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
@@ -223,12 +228,36 @@ fn initial_setting_command(path: String) -> Result<Memo, String> {
 }
 
 #[tauri::command]
-fn delete_memo_command(path: String, target: String, id: String) -> Result<bool, String> {
-    let result = delete_memo(path, target,id);
+fn delete_memo_command(target: String, id: String,task_path: State<TaskPath>) -> Result<bool, String> {
+    let m_task_path = task_path.0.lock().unwrap();
+    let result = delete_memo(m_task_path.to_string(), target,id);
+
     match result {
         Ok(memo) => Ok(memo),
         Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
     }
 }
 
+#[tauri::command]
+fn check_path(task_path: State<TaskPath>) -> Result<bool,String> {
+    let m_task_path = task_path.0.lock().unwrap();
+
+    if m_task_path.is_empty() {
+        Ok(false)
+    } else {
+        Ok(true)
+    }
+}
+
+
+#[tauri::command]
+fn get_memo_command(task_path: State<TaskPath>) -> Result<Memo,String> {
+    let mut m_task_path = task_path.0.lock().unwrap();
+    let result = read_file(m_task_path.to_string());
+
+    match result {
+        Ok(memo) => Ok(memo),
+        Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
+    }
+}
 
