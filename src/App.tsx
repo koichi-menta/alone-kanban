@@ -110,7 +110,7 @@ function App() {
         }
       })
       .catch(() => {});
-  });
+  }, []);
 
   return (
     <div className="wrapper">
