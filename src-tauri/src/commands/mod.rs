@@ -74,7 +74,7 @@ pub fn check_path_command(task_path: State<TaskPath>) -> Result<bool,String> {
 
 #[tauri::command]
 pub fn get_task_command(task_path: State<TaskPath>) -> Result<Kanban,String> {
-    let mut m_task_path = task_path.0.lock().unwrap();
+    let m_task_path = task_path.0.lock().unwrap();
     let result = functions::read_file(m_task_path.to_string());
 
     match result {

@@ -23,9 +23,9 @@ pub fn create_task(task_path: String,task: Task) -> Result<bool, Box<dyn error::
     match read_kanban_result {
         Ok(mut kanban) => {
             kanban.todo.push(task);
-            let json_dadta = serde_json::to_string_pretty(&kanban).unwrap();
+            let json_data = serde_json::to_string_pretty(&kanban).unwrap();
             let mut json_file = File::create(task_path).unwrap();
-            writeln!(json_file, "{}", json_dadta);
+            writeln!(json_file, "{}", json_data);
             Ok(true)
         },
         Err(err) =>  {
