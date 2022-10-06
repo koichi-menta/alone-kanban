@@ -17,12 +17,12 @@ pub struct TaskPath(Mutex<String>);
 fn main() {
     tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
-        create_memo_command,
-        move_memo_command,
+        create_task_command,
+        move_task_command,
         initial_setting_command,
-        delete_memo_command,
+        delete_task_command,
         check_path_command,
-        get_memo_command,
+        get_task_command,
     ])
     .setup(|app| {
         app.manage(TaskPath(Mutex::new(String::from(""))));

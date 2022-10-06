@@ -8,7 +8,7 @@ use crate::TaskPath;
 
 #[derive(Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
-pub struct Todo {
+pub struct Task {
     id: String,
     name: String,
     is_complete: bool,
@@ -16,46 +16,46 @@ pub struct Todo {
 
 #[derive(Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
-pub struct Memo {
-    todo: Vec<Todo>,
-    in_progress: Vec<Todo>,
-    done: Vec<Todo>,
+pub struct Kanban {
+    todo: Vec<Task>,
+    in_progress: Vec<Task>,
+    done: Vec<Task>,
 }
 
 #[tauri::command]
-pub fn create_memo_command(arg_memo: Todo, task_path: State<TaskPath>) {
+pub fn create_task_command(task: Task, task_path: State<TaskPath>) {
     let m_task_path = task_path.0.lock().unwrap();
     // エラーハンドリングは必要
-    functions::create_todo(m_task_path.to_string(), arg_memo);
+    functions::create_task(m_task_path.to_string(), task);
 }
 
 #[tauri::command]
-pub fn move_memo_command(arg_memo: Todo, from: String, to: String, task_path: State<TaskPath>) {
+pub fn move_task_command(task: Task, from: String, to: String, task_path: State<TaskPath>) {
     let m_task_path = task_path.0.lock().unwrap();
     // エラーハンドリングは必要
-    functions::move_todo(m_task_path.to_string(),arg_memo,from,to);
+    functions::move_task(m_task_path.to_string(),task,from,to);
 }
 
 #[tauri::command]
-pub fn initial_setting_command(path:String, task_path: State<TaskPath>) -> Result<Memo, String> {
+pub fn initial_setting_command(path:String, task_path: State<TaskPath>) -> Result<Kanban, String> {
     let mut m_task_path = task_path.0.lock().unwrap();
     *m_task_path = path;
 
     let result = functions::read_file(m_task_path.to_string());
 
     match result {
-        Ok(memo) => Ok(memo),
+        Ok(kanban) => Ok(kanban),
         Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
     }
 }
 
 #[tauri::command]
-pub fn delete_memo_command(target: String, id: String,task_path: State<TaskPath>) -> Result<bool, String> {
+pub fn delete_task_command(target: String, id: String,task_path: State<TaskPath>) -> Result<bool, String> {
     let m_task_path = task_path.0.lock().unwrap();
-    let result = functions::delete_memo(m_task_path.to_string(), target,id);
+    let result = functions::delete_task(m_task_path.to_string(), target,id);
 
     match result {
-        Ok(memo) => Ok(memo),
+        Ok(kanban) => Ok(kanban),
         Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
     }
 }
@@ -73,12 +73,12 @@ pub fn check_path_command(task_path: State<TaskPath>) -> Result<bool,String> {
 
 
 #[tauri::command]
-pub fn get_memo_command(task_path: State<TaskPath>) -> Result<Memo,String> {
+pub fn get_task_command(task_path: State<TaskPath>) -> Result<Kanban,String> {
     let mut m_task_path = task_path.0.lock().unwrap();
     let result = functions::read_file(m_task_path.to_string());
 
     match result {
-        Ok(memo) => Ok(memo),
+        Ok(kanban) => Ok(kanban),
         Err(_) => Err(String::from("ファイル読み込み時にエラーが発生しました"))
     }
 }

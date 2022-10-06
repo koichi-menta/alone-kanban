@@ -2,28 +2,28 @@ use std::io::BufReader;
 use std::{fs::File, error};
 use std::io::{prelude::*};
 
-use super::{Memo, Todo};
+use super::{Kanban, Task};
 
-pub fn read_file(path: String) -> Result<Memo, Box<dyn error::Error>> {
-    let memos_file = File::open(path)?;
-    let reader = BufReader::new(memos_file);
-    let memo= serde_json::from_reader(reader)?;
+pub fn read_file(path: String) -> Result<Kanban, Box<dyn error::Error>> {
+    let tasks_file = File::open(path)?;
+    let reader = BufReader::new(tasks_file);
+    let kanban= serde_json::from_reader(reader)?;
     
-    Ok(memo)
+    Ok(kanban)
 }
 
-pub fn create_todo(task_path: String,arg_memo: Todo) -> Result<bool, Box<dyn error::Error>> {
-    let todo = Todo {
-        id: String::from(arg_memo.id),
-        name: String::from(arg_memo.name),
-        is_complete: arg_memo.is_complete,
+pub fn create_task(task_path: String,task: Task) -> Result<bool, Box<dyn error::Error>> {
+    let task = Task {
+        id: String::from(task.id),
+        name: String::from(task.name),
+        is_complete: task.is_complete,
     };
-    let read_memo_result = read_file(task_path.clone());
+    let read_kanban_result = read_file(task_path.clone());
 
-    match read_memo_result {
-        Ok(mut memo) => {
-            memo.todo.push(todo);
-            let json_dadta = serde_json::to_string_pretty(&memo).unwrap();
+    match read_kanban_result {
+        Ok(mut kanban) => {
+            kanban.todo.push(task);
+            let json_dadta = serde_json::to_string_pretty(&kanban).unwrap();
             let mut json_file = File::create(task_path).unwrap();
             writeln!(json_file, "{}", json_dadta);
             Ok(true)
@@ -34,47 +34,47 @@ pub fn create_todo(task_path: String,arg_memo: Todo) -> Result<bool, Box<dyn err
     }
 }
 
-pub fn move_todo(task_path: String,arg_memo: Todo, from: String, to: String) -> Result<bool, Box<dyn error::Error>> {
-    let todo = Todo {
-        id: String::from(arg_memo.id),
-        name: String::from(arg_memo.name),
-        is_complete: arg_memo.is_complete,
+pub fn move_task(task_path: String,task: Task, from: String, to: String) -> Result<bool, Box<dyn error::Error>> {
+    let task = Task {
+        id: String::from(task.id),
+        name: String::from(task.name),
+        is_complete: task.is_complete,
     };
-    let mut read_memo = read_file(task_path.clone())?;
+    let mut read_kanban = read_file(task_path.clone())?;
     let from_to: (&str, &str) = (&from, &to);
 
     match &*from {
         "todo" => {
-            let target_id = read_memo.todo.iter().position(|x| *x.id == todo.id);
+            let target_id = read_kanban.todo.iter().position(|x| *x.id == task.id);
             match target_id {
                 Some(x) => {
                     match &from_to {
                         ("todo", "in_progress") => {
-                            read_memo.todo.remove(x);
-                            read_memo.in_progress.push(todo);
+                            read_kanban.todo.remove(x);
+                            read_kanban.in_progress.push(task);
                         },
                         ("todo", "done") => {
-                            read_memo.todo.remove(x);
-                            read_memo.done.push(todo);
+                            read_kanban.todo.remove(x);
+                            read_kanban.done.push(task);
                         },
-                        _ => {println!("todoではありません")},
+                        _ => {println!("taskではありません")},
                     }
                 },
                 None => println!("移動するデータはありません"),
             }
         },
         "in_progress" => {
-            let target_id = read_memo.in_progress.iter().position(|x| *x.id == todo.id);
+            let target_id = read_kanban.in_progress.iter().position(|x| *x.id == task.id);
             match target_id {
                 Some(x) => {
                     match &from_to {
                         ("in_progress", "todo") => {
-                            read_memo.in_progress.remove(x);
-                            read_memo.todo.push(todo);
+                            read_kanban.in_progress.remove(x);
+                            read_kanban.todo.push(task);
                         },
                         ("in_progress", "done") => {
-                            read_memo.in_progress.remove(x);
-                            read_memo.done.push(todo);
+                            read_kanban.in_progress.remove(x);
+                            read_kanban.done.push(task);
                         },
                         _ => {println!("in_progressではありません")},
                     }
@@ -83,17 +83,17 @@ pub fn move_todo(task_path: String,arg_memo: Todo, from: String, to: String) -> 
             }
         },
         "done" => {
-            let target_id = read_memo.done.iter().position(|x| *x.id == todo.id);
+            let target_id = read_kanban.done.iter().position(|x| *x.id == task.id);
             match target_id {
                 Some(x) => {
                     match &from_to {
                         ("done", "in_progress") => {
-                            read_memo.done.remove(x);
-                            read_memo.in_progress.push(todo);
+                            read_kanban.done.remove(x);
+                            read_kanban.in_progress.push(task);
                         },
                         ("done", "todo") => {
-                            read_memo.done.remove(x);
-                            read_memo.todo.push(todo);
+                            read_kanban.done.remove(x);
+                            read_kanban.todo.push(task);
                         },
                         _ => {println!("in_progressではありません")},
                     }
@@ -101,10 +101,10 @@ pub fn move_todo(task_path: String,arg_memo: Todo, from: String, to: String) -> 
                 None => println!("移動するデータはありません"),
             }
         },
-        _ => {println!("todoではありません")},
+        _ => {println!("taskではありません")},
     };
 
-    let json_data = serde_json::to_string_pretty(&read_memo).unwrap();
+    let json_data = serde_json::to_string_pretty(&read_kanban).unwrap();
     println!("更新内容 {}", json_data);
     let mut json_file = File::create(task_path).unwrap();
     writeln!(json_file, "{}", json_data);
@@ -112,41 +112,41 @@ pub fn move_todo(task_path: String,arg_memo: Todo, from: String, to: String) -> 
     Ok(true)
 }
 
-pub fn delete_memo(path: String, target: String, id: String) -> Result<bool, Box<dyn error::Error>> {
-    let mut read_memo = read_file(path.clone())?;
+pub fn delete_task(path: String, target: String, id: String) -> Result<bool, Box<dyn error::Error>> {
+    let mut read_kanban = read_file(path.clone())?;
     
     match &*target {
         "todo" => {
-            let target_id = read_memo.todo.iter().position(|x| *x.id == id);
+            let target_id = read_kanban.todo.iter().position(|x| *x.id == id);
             println!("target_id {:?}",target_id);
             match target_id {
                 Some(fix_target_id) => {
-                    read_memo.todo.remove(fix_target_id);
+                    read_kanban.todo.remove(fix_target_id);
                 },
-                None => {println!("todoではありません")},
+                None => {println!("taskではありません")},
             }
         },
         "in_progress" => {
-            let target_id = read_memo.in_progress.iter().position(|x| *x.id == id);
+            let target_id = read_kanban.in_progress.iter().position(|x| *x.id == id);
             match target_id {
                 Some(fix_target_id) => {
-                    read_memo.in_progress.remove(fix_target_id);
+                    read_kanban.in_progress.remove(fix_target_id);
                 },
-                None => {println!("todoではありません")},
+                None => {println!("taskではありません")},
             }
         },
         "done" => {
-            let target_id = read_memo.done.iter().position(|x| *x.id == id);
+            let target_id = read_kanban.done.iter().position(|x| *x.id == id);
             match target_id {
                 Some(fix_target_id) => {
-                    read_memo.done.remove(fix_target_id);
+                    read_kanban.done.remove(fix_target_id);
                 },
-                None => {println!("todoではありません")},
+                None => {println!("taskではありません")},
             }
         },
-        _ => {println!("todoではありません")},
+        _ => {println!("taskではありません")},
     }
-    let json_data = serde_json::to_string_pretty(&read_memo).unwrap();
+    let json_data = serde_json::to_string_pretty(&read_kanban).unwrap();
     let mut json_file = File::create(path).unwrap();
     writeln!(json_file, "{}", json_data);
     Ok(true)

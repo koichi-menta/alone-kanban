@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
-import { Memo } from "../src-tauri/bindings/Memo";
+import { Kanban } from "../src-tauri/bindings/Kanban";
 import { ReactSortable } from "react-sortablejs";
-import { Todo } from "../src-tauri/bindings/Todo";
+import { Task } from "../src-tauri/bindings/Task";
 import { ulid } from "ulid";
 import { open } from "@tauri-apps/api/dialog";
 
 function App() {
   const [text, setText] = useState<string>("");
-  const [todo, setTodo] = useState<Todo[]>([]);
-  const [inProgress, setInProgress] = useState<Todo[]>([]);
-  const [done, setDone] = useState<Todo[]>([]);
+  const [todo, setTodo] = useState<Task[]>([]);
+  const [inProgress, setInProgress] = useState<Task[]>([]);
+  const [done, setDone] = useState<Task[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const handleCreateMemo = async () => {
+  const handleCreateTask = async () => {
     if (text === "") return;
 
     const newTodo = {
@@ -22,8 +22,8 @@ function App() {
       name: text,
       is_complete: false,
     };
-    await invoke("create_memo_command", {
-      argMemo: newTodo,
+    await invoke("create_task_command", {
+      task: newTodo,
     })
       .then(() => {
         setTodo([...todo, newTodo]);
@@ -32,16 +32,16 @@ function App() {
       .catch(() => {});
   };
 
-  const handleMoveMemo = async (from: string, to: string, oldIndex: number) => {
-    let oldData: Todo | undefined;
-    if (from === "todo") oldData = todo[oldIndex];
-    if (from === "in_progress") oldData = inProgress[oldIndex];
-    if (from === "done") oldData = done[oldIndex];
+  const handleMoveTask = async (from: string, to: string, oldIndex: number) => {
+    let oldTask: Task | undefined;
+    if (from === "todo") oldTask = todo[oldIndex];
+    if (from === "in_progress") oldTask = inProgress[oldIndex];
+    if (from === "done") oldTask = done[oldIndex];
 
-    if (!oldData) return;
+    if (!oldTask) return;
 
-    await invoke("move_memo_command", {
-      argMemo: oldData,
+    await invoke("move_task_command", {
+      task: oldTask,
       from,
       to,
     });
@@ -53,7 +53,7 @@ function App() {
         if (files === null) return;
 
         setIsOpen(false);
-        await invoke<Memo>("initial_setting_command", {
+        await invoke<Kanban>("initial_setting_command", {
           path: files,
         })
           .then((data) => {
@@ -66,9 +66,9 @@ function App() {
       .catch(() => {});
   };
 
-  const handleDeleteMemo = async (e: any, id: string) => {
+  const handleDeleteTask = async (e: any, id: string) => {
     const target = e.currentTarget.getAttribute("data-target");
-    await invoke<Memo>("delete_memo_command", {
+    await invoke<Kanban>("delete_task_command", {
       target,
       id,
     })
@@ -100,7 +100,7 @@ function App() {
       .then((data) => {
         console.log("data", data);
         if (data) {
-          invoke<Memo>("get_memo_command").then((todo) => {
+          invoke<Kanban>("get_task_command").then((todo) => {
             setTodo(todo.todo);
             setInProgress(todo.in_progress);
             setDone(todo.done);
@@ -120,7 +120,7 @@ function App() {
           onChange={(e) => setText(e.target.value)}
           value={text}
         />
-        <button onClick={handleCreateMemo}>作成</button>
+        <button onClick={handleCreateTask}>作成</button>
       </div>
       <div className="container">
         <div className="column">
@@ -131,7 +131,7 @@ function App() {
             list={todo}
             setList={setTodo}
             onEnd={(e) => {
-              handleMoveMemo(e.from.id, e.to.id, e.oldIndex);
+              handleMoveTask(e.from.id, e.to.id, e.oldIndex);
             }}
             className="columnTasks"
             id="todo"
@@ -143,7 +143,7 @@ function App() {
                   <span
                     className="deleteBtn"
                     data-target="todo"
-                    onClick={(e) => handleDeleteMemo(e, item.id)}
+                    onClick={(e) => handleDeleteTask(e, item.id)}
                   >
                     x
                   </span>
@@ -160,7 +160,7 @@ function App() {
             list={inProgress}
             setList={setInProgress}
             onEnd={(e) => {
-              handleMoveMemo(e.from.id, e.to.id, e.oldIndex);
+              handleMoveTask(e.from.id, e.to.id, e.oldIndex);
             }}
             className="columnTasks"
             id="in_progress"
@@ -172,7 +172,7 @@ function App() {
                   <span
                     className="deleteBtn"
                     data-target="in_progress"
-                    onClick={(e) => handleDeleteMemo(e, item.id)}
+                    onClick={(e) => handleDeleteTask(e, item.id)}
                   >
                     x
                   </span>
@@ -189,7 +189,7 @@ function App() {
             list={done}
             setList={setDone}
             onEnd={(e) => {
-              handleMoveMemo(e.from.id, e.to.id, e.oldIndex);
+              handleMoveTask(e.from.id, e.to.id, e.oldIndex);
             }}
             className="columnTasks"
             id="done"
@@ -201,7 +201,7 @@ function App() {
                   <span
                     className="deleteBtn"
                     data-target="done"
-                    onClick={(e) => handleDeleteMemo(e, item.id)}
+                    onClick={(e) => handleDeleteTask(e, item.id)}
                   >
                     x
                   </span>
