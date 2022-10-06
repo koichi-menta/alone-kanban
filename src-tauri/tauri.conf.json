@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "jl-kanban",
-    "version": "0.0.0"
+    "productName": "alone-kanban",
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -28,7 +28,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.example",
+      "identifier": "com.koichiweb",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -57,7 +57,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "jl-kanban",
+        "title": "alone-kanban",
         "width": 800
       }
     ]
