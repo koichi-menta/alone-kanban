@@ -58,7 +58,8 @@
         "height": 600,
         "resizable": true,
         "title": "alone-kanban",
-        "width": 800
+        "width": 800,
+        "fileDropEnabled": false
       }
     ]
   }
