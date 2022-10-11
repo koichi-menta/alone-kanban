@@ -135,6 +135,7 @@ function App() {
             }}
             className="columnTasks"
             id="todo"
+            forceFallback={true}
           >
             {todo.map((item) => {
               return (
@@ -164,6 +165,7 @@ function App() {
             }}
             className="columnTasks"
             id="in_progress"
+            forceFallback={true}
           >
             {inProgress.map((item) => {
               return (
@@ -193,6 +195,7 @@ function App() {
             }}
             className="columnTasks"
             id="done"
+            forceFallback={true}
           >
             {done.map((item) => {
               return (
