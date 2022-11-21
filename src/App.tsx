@@ -6,6 +6,12 @@ import { ReactSortable } from "react-sortablejs";
 import { Task } from "../src-tauri/bindings/Task";
 import { ulid } from "ulid";
 import { open } from "@tauri-apps/api/dialog";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import AddIcon from "@mui/icons-material/Add";
+import Modal from "@mui/material/Modal";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
 
 function App() {
   const [text, setText] = useState<string>("");
@@ -13,6 +19,7 @@ function App() {
   const [inProgress, setInProgress] = useState<Task[]>([]);
   const [done, setDone] = useState<Task[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
 
   const handleCreateTask = async () => {
     if (text === "") return;
@@ -95,6 +102,10 @@ function App() {
       .catch(() => {});
   };
 
+  const handleCreateTaskModal = () => {
+    setIsTaskModalOpen(true);
+  };
+
   useEffect(() => {
     invoke("check_path_command")
       .then((data) => {
@@ -115,16 +126,22 @@ function App() {
   return (
     <div className="wrapper">
       <div className="taskInput">
-        <input
-          type="text"
+        <TextField
           onChange={(e) => setText(e.target.value)}
           value={text}
+          label="タスク名を入力"
+          size="small"
         />
-        <button onClick={handleCreateTask}>作成</button>
+        <Button variant="contained" onClick={handleCreateTask}>
+          作成
+        </Button>
       </div>
       <div className="container">
         <div className="column">
-          <p className="columnName">Todo</p>
+          <div className="columnHeader">
+            <p className="columnName">Todo</p>
+            <AddIcon onClick={handleCreateTaskModal} />
+          </div>
           <ReactSortable
             group="groupName"
             animation={200}
@@ -139,16 +156,18 @@ function App() {
           >
             {todo.map((item) => {
               return (
-                <div className="taskItem" key={item.id}>
-                  {item.name}
-                  <span
-                    className="deleteBtn"
-                    data-target="todo"
-                    onClick={(e) => handleDeleteTask(e, item.id)}
-                  >
-                    x
-                  </span>
-                </div>
+                <Card className="taskItem" key={item.id}>
+                  <CardContent>
+                    {item.name}
+                    <span
+                      className="deleteBtn"
+                      data-target="todo"
+                      onClick={(e) => handleDeleteTask(e, item.id)}
+                    >
+                      x
+                    </span>
+                  </CardContent>
+                </Card>
               );
             })}
           </ReactSortable>
@@ -169,16 +188,18 @@ function App() {
           >
             {inProgress.map((item) => {
               return (
-                <div className="taskItem" key={item.id}>
-                  {item.name}
-                  <span
-                    className="deleteBtn"
-                    data-target="in_progress"
-                    onClick={(e) => handleDeleteTask(e, item.id)}
-                  >
-                    x
-                  </span>
-                </div>
+                <Card className="taskItem" key={item.id}>
+                  <CardContent>
+                    {item.name}
+                    <span
+                      className="deleteBtn"
+                      data-target="in_progress"
+                      onClick={(e) => handleDeleteTask(e, item.id)}
+                    >
+                      x
+                    </span>
+                  </CardContent>
+                </Card>
               );
             })}
           </ReactSortable>
@@ -199,31 +220,38 @@ function App() {
           >
             {done.map((item) => {
               return (
-                <div className="taskItem" key={item.id}>
-                  {item.name}
-                  <span
-                    className="deleteBtn"
-                    data-target="done"
-                    onClick={(e) => handleDeleteTask(e, item.id)}
-                  >
-                    x
-                  </span>
-                </div>
+                <Card className="taskItem" key={item.id}>
+                  <CardContent>
+                    {item.name}
+                    <span
+                      className="deleteBtn"
+                      data-target="done"
+                      onClick={(e) => handleDeleteTask(e, item.id)}
+                    >
+                      x
+                    </span>
+                  </CardContent>
+                </Card>
               );
             })}
           </ReactSortable>
         </div>
       </div>
       {isOpen && (
-        <div className="cover">
-          <div className="settingModal">
+        <Modal open={isOpen}>
+          <Card className="settingModal">
             <p>タスクファイルを選択してください</p>
             <div>
               <button onClick={handleInitialSetting}>ファイル</button>
             </div>
-          </div>
-        </div>
+          </Card>
+        </Modal>
       )}
+      <Modal open={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)}>
+        <Card>
+          <p>hello</p>
+        </Card>
+      </Modal>
     </div>
   );
 }

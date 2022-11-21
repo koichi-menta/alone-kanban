@@ -18,11 +18,18 @@ body {
 }
 .taskInput {
   margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
 }
 .column {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.columnHeader {
+  display: flex;
+  justify-content: space-between;
 }
 
 .columnName {
@@ -34,7 +41,8 @@ body {
 .columnTasks {
   width: 200px;
   height: 400px;
-  border: 1px solid #0a0a0a;
+  border-radius: 5px;
+  background-color: #e6e6e6;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -46,7 +54,7 @@ body {
   width: 100%;
   height: 100px;
   min-height: 100px;
-  border: 1px solid #0a0a0a;
+  /* border: 1px solid #0a0a0a; */
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
