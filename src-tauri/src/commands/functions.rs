@@ -12,7 +12,7 @@ pub fn read_file(path: String) -> Result<Kanban, Box<dyn error::Error>> {
     Ok(kanban)
 }
 
-pub fn create_task(task_path: String,task: Task) -> Result<bool, Box<dyn error::Error>> {
+pub fn create_task(task_path: String, task: Task, target: String) -> Result<bool, Box<dyn error::Error>> {
     let task = Task {
         id: String::from(task.id),
         name: String::from(task.name),
@@ -22,7 +22,18 @@ pub fn create_task(task_path: String,task: Task) -> Result<bool, Box<dyn error::
 
     match read_kanban_result {
         Ok(mut kanban) => {
-            kanban.todo.push(task);
+            match &*target {
+                "todo" => {
+                    kanban.todo.push(task);
+                }
+                "in_progress" => {
+                    kanban.in_progress.push(task);
+                }
+                "done" => {
+                    kanban.done.push(task);
+                }
+                _ => {println!("対象がありません")}
+            }
             let json_data = serde_json::to_string_pretty(&kanban).unwrap();
             let mut json_file = File::create(task_path).unwrap();
             writeln!(json_file, "{}", json_data);

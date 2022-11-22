@@ -20,6 +20,7 @@ function App() {
   const [done, setDone] = useState<Task[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
+  const [target, setTarget] = useState<string>("");
 
   const handleCreateTask = async () => {
     if (text === "") return;
@@ -31,10 +32,14 @@ function App() {
     };
     await invoke("create_task_command", {
       task: newTodo,
+      target,
     })
       .then(() => {
-        setTodo([...todo, newTodo]);
+        if (target === "todo") setTodo([...todo, newTodo]);
+        if (target === "in_progress") setInProgress([...inProgress, newTodo]);
+        if (target === "done") setDone([...done, newTodo]);
         setText("");
+        setIsTaskModalOpen(false);
       })
       .catch(() => {});
   };
@@ -102,7 +107,8 @@ function App() {
       .catch(() => {});
   };
 
-  const handleCreateTaskModal = () => {
+  const handleCreateTaskModal = (target: string) => {
+    setTarget(target);
     setIsTaskModalOpen(true);
   };
 
@@ -125,22 +131,14 @@ function App() {
 
   return (
     <div className="wrapper">
-      <div className="taskInput">
-        <TextField
-          onChange={(e) => setText(e.target.value)}
-          value={text}
-          label="タスク名を入力"
-          size="small"
-        />
-        <Button variant="contained" onClick={handleCreateTask}>
-          作成
-        </Button>
-      </div>
       <div className="container">
         <div className="column">
           <div className="columnHeader">
             <p className="columnName">Todo</p>
-            <AddIcon onClick={handleCreateTaskModal} />
+            <AddIcon
+              cursor="pointer"
+              onClick={() => handleCreateTaskModal("todo")}
+            />
           </div>
           <ReactSortable
             group="groupName"
@@ -173,7 +171,13 @@ function App() {
           </ReactSortable>
         </div>
         <div className="column">
-          <p className="columnName">In Progress</p>
+          <div className="columnHeader">
+            <p className="columnName">In Progress</p>
+            <AddIcon
+              cursor="pointer"
+              onClick={() => handleCreateTaskModal("in_progress")}
+            />
+          </div>
           <ReactSortable
             group="groupName"
             animation={200}
@@ -205,7 +209,13 @@ function App() {
           </ReactSortable>
         </div>
         <div className="column">
-          <p className="columnName">Done</p>
+          <div className="columnHeader">
+            <p className="columnName">Done</p>
+            <AddIcon
+              cursor="pointer"
+              onClick={() => handleCreateTaskModal("done")}
+            />
+          </div>
           <ReactSortable
             group="groupName"
             animation={200}
@@ -247,9 +257,21 @@ function App() {
           </Card>
         </Modal>
       )}
+
       <Modal open={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)}>
-        <Card>
-          <p>hello</p>
+        <Card className="modalCard">
+          <div className="taskInput">
+            <TextField
+              onChange={(e) => setText(e.target.value)}
+              value={text}
+              label="タスク名を入力"
+              size="small"
+              autoFocus={true}
+            />
+            <Button variant="contained" onClick={handleCreateTask}>
+              作成
+            </Button>
+          </div>
         </Card>
       </Modal>
     </div>
