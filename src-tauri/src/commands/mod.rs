@@ -23,10 +23,10 @@ pub struct Kanban {
 }
 
 #[tauri::command]
-pub fn create_task_command(task: Task, task_path: State<TaskPath>) {
+pub fn create_task_command(task: Task, target: String, task_path: State<TaskPath>) {
     let m_task_path = task_path.0.lock().unwrap();
     // エラーハンドリングは必要
-    functions::create_task(m_task_path.to_string(), task);
+    functions::create_task(m_task_path.to_string(), task, target);
 }
 
 #[tauri::command]
